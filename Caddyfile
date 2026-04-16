@@ -1,0 +1,36 @@
+{
+    debug
+    servers {
+        protocols h1 h2 h3
+    }
+}
+
+https://localhost {
+    tls /etc/caddy/certs/localhost.crt /etc/caddy/certs/localhost.key
+    
+    # Root path
+    root * /srv/html
+    file_server
+
+    # Video path
+    handle_path /video/* {
+        root * /srv/video
+        file_server
+    }
+
+    # Network API
+    handle_path /api/* {
+        reverse_proxy localhost:5000
+    }
+
+    # Enable H3 discovery
+    header {
+        Alt-Svc "h3=\":443\"; ma=86400"
+        Access-Control-Allow-Origin *
+    }
+    
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+}

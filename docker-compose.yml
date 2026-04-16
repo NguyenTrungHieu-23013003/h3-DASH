@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  h3-dash:
+    build: .
+    container_name: h3-dash-server
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    ports:
+      - "443:443/tcp"
+      - "443:443/udp"
+    volumes:
+      - ./html:/srv/html
+      - ./video:/srv/video
+      - ./certs:/etc/caddy/certs
+    restart: unless-stopped

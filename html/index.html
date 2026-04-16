@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>H3-DASH Analytical Lab Tool</title>
+
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Shaka Player -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --glass-bg: rgba(20, 25, 35, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent-green: #00e676;
+            --accent-blue: #00d2ff;
+            --accent-gold: #fbc02d;
+            --accent-red: #ff5252;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0e17 0%, #101c30 100%);
+            color: #ececec;
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            padding: 20px 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        #hidden-chart-container {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 800px;
+            height: 400px;
+            background: #0a0e17;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .lab-header {
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .lab-title {
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 1.25rem;
+            color: var(--accent-blue);
+        }
+
+        video {
+            width: 100%;
+            border-radius: 12px;
+            background: #000;
+            border: 1px solid #444;
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .badge-protocol {
+            background: #1b5e20;
+            color: #00e676;
+            border: 1px solid #00e676;
+        }
+
+        .badge-h2 {
+            background: #4a3a00;
+            color: #fbc02d;
+            border: 1px solid #fbc02d;
+        }
+
+        .badge-quality {
+            background: rgba(0, 210, 255, 0.1);
+            color: var(--accent-blue);
+            border: 1px solid var(--accent-blue);
+        }
+
+        .btn-lab {
+            border-radius: 8px;
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            padding: 8px 16px;
+            transition: all 0.2s;
+        }
+
+        .btn-network {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .btn-network.active {
+            background: var(--accent-blue) !important;
+            color: #000 !important;
+            border-color: var(--accent-blue);
+        }
+
+        .btn-network:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-record.recording {
+            background: #fff !important;
+            color: #000 !important;
+        }
+
+        .recording-dot {
+            width: 10px;
+            height: 10px;
+            background: #ff5252;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .pulse {
+            animation: pulse-red 1.5s infinite;
+        }
+
+        .pulse-small {
+            animation: pulse-small 2s infinite;
+        }
+
+        @keyframes pulse-small {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse-red {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(255, 82, 82, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+            }
+        }
+
+        #log-terminal {
+            background: rgba(0, 0, 0, 0.6);
+            height: 150px;
+            overflow-y: auto;
+            overflow-x: auto;
+            white-space: nowrap;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            padding: 12px;
+            border-radius: 10px;
+            color: #00ff41;
+            border: 1px solid #333;
+        }
+
+        .network-status-badge {
+            font-size: 0.8rem;
+            padding: 5px 12px;
+            border-radius: 50px;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+
+        /* Responsive spacing */
+        .row-stats>div {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+    <div id="hidden-chart-container">
+        <canvas id="performanceChart"></canvas>
+    </div>
+
+    <!-- Results Modal -->
+    <div class="modal fade" id="resultsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content"
+                style="background: rgba(10, 14, 23, 0.95); border: 1px solid var(--accent-blue); backdrop-filter: blur(20px); border-radius: 20px; color: #fff;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title w-100 text-center"><i class="fas fa-file-invoice me-2 text-info"></i>SESSION
+                        ANALYTICS SUMMARY</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <div id="modal-chart-container" class="mb-4"
+                        style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                        <img id="result-chart-img" style="max-width: 100%; border-radius: 8px;" />
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <div class="stat-card p-2" style="background: rgba(255,255,255,0.05);">
+                                <div class="small text-secondary mb-1">Duration</div>
+                                <div id="stat-duration" class="h5 mb-0 text-info">-</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-card p-2" style="background: rgba(255,255,255,0.05);">
+                                <div class="small text-secondary mb-1">Avg Bitrate</div>
+                                <div id="stat-avg-bit" class="h5 mb-0 text-warning">-</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-card p-2" style="background: rgba(255,255,255,0.05);">
+                                <div class="small text-secondary mb-1">Max BW</div>
+                                <div id="stat-max-bw" class="h5 mb-0 text-success">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pb-4">
+                    <button onclick="downloadCSVFileOnly()" class="btn btn-info px-4 rounded-pill"><i
+                            class="fas fa-file-csv me-2"></i>Download Logs (CSV Only)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="glass-panel py-2 px-3 mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <span class="lab-title" style="font-size: 1.1rem;"><i class="fas fa-microchip me-2"></i>H3-DASH ANALYSIS
+                LAB</span>
+            <span id="active-profile" class="badge bg-success network-status-badge">No Constraint</span>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <button id="btn-view-chart" onclick="viewChart()" class="btn btn-outline-warning btn-lab py-1"
+                style="display: none;">
+                <i class="fas fa-chart-area me-1"></i>View Session Chart
+            </button>
+            <button id="btn-record" onclick="toggleRecording()" class="btn btn-danger btn-lab py-1">
+                <span id="record-dot" class="recording-dot"></span>
+                <span id="record-text">Session Start</span>
+            </button>
+            <button id="btn-download" onclick="downloadCSV()" class="btn btn-outline-info btn-lab py-1" disabled>
+                <i class="fas fa-file-export me-1"></i>Export
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Main Area: Video Only -->
+        <div class="col-lg-8">
+            <div class="glass-panel p-2 mb-0">
+                <video id="videoPlayer" controls autoplay muted style="aspect-ratio: 16/9;"></video>
+            </div>
+        </div>
+
+        <!-- Sidebar Area: Stats & Controls -->
+        <div class="col-lg-4">
+            <!-- Metrics Column -->
+            <div class="glass-panel mb-3 p-3">
+                <div class="stat-label mb-3 fw-bold border-bottom pb-1 border-secondary"><i
+                        class="fas fa-satellite-dish me-2"></i>Metrics Engine</div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="stat-card py-2">
+                            <span class="stat-label">Protocol</span>
+                            <span id="protocol" class="stat-value" style="font-size: 1rem;">-</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-card py-2">
+                            <span class="stat-label">Throughput</span>
+                            <span id="bandwidth" class="stat-value"
+                                style="font-size: 1rem; color: var(--accent-green);">0.0</span> <small
+                                class="text-secondary" style="font-size: 0.6rem;">Mbps</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-card py-2">
+                            <span class="stat-label">Latency</span>
+                            <span id="latency" class="stat-value"
+                                style="font-size: 1rem; color: var(--accent-gold);">0</span> <small
+                                class="text-secondary" style="font-size: 0.6rem;">ms</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-card py-2">
+                            <span class="stat-label">Buffer</span>
+                            <div class="progress mt-1" style="height: 4px; background: rgba(255,255,255,0.05);">
+                                <div id="buffer-progress" class="progress-bar"
+                                    style="width: 0%; background: var(--accent-blue);"></div>
+                            </div>
+                            <span id="buffer" class="stat-value"
+                                style="font-size: 1rem; color: var(--accent-blue);">0.0</span> <small
+                                class="text-secondary" style="font-size: 0.6rem;">sec</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-card py-2">
+                            <span class="stat-label">Quality</span>
+                            <span id="resolution" class="stat-value" style="font-size: 0.9rem;">-</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-card py-2">
+                            <span class="stat-label">Bitrate</span>
+                            <span id="bitrate" class="stat-value"
+                                style="font-size: 1rem; color: var(--accent-gold);">0</span> <small
+                                class="text-secondary" style="font-size: 0.6rem;">kbps</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Panel -->
+            <div class="glass-panel mb-3 p-3">
+                <div class="row g-3">
+
+
+                    <div class="col-12">
+                        <div class="stat-label mb-2 fw-bold text-info"><i class="fas fa-layer-group me-2"></i>ABR
+                            Profile</div>
+                        <div class="d-flex flex-wrap gap-1">
+                            <button id="btn-auto" onclick="setActive(this, 'quality'); setAuto()"
+                                class="btn btn-network active btn-sm flex-grow-1"><i
+                                    class="fas fa-sync-alt me-1"></i>AUTO</button>
+                            <button onclick="setActive(this, 'quality'); setQuality(240)"
+                                class="btn btn-network btn-sm">240p</button>
+                            <button onclick="setActive(this, 'quality'); setQuality(480)"
+                                class="btn btn-network btn-sm">480p</button>
+                            <button onclick="setActive(this, 'quality'); setQuality(720)"
+                                class="btn btn-network btn-sm">720p</button>
+                            <button onclick="setActive(this, 'quality'); setQuality(1080)"
+                                class="btn btn-network btn-sm">1080p</button>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="stat-label mb-2 fw-bold text-warning"><i class="fas fa-broadcast-tower me-2"></i>Sim
+                            Profile</div>
+                        <div class="d-flex flex-wrap gap-1">
+                            <button onclick="setNetwork('2g', this)" class="btn btn-network btn-sm flex-fill"
+                                title="2G GPRS"><i class="fas fa-mobile-alt me-1"></i>GPRS</button>
+                            <button onclick="setNetwork('3g', this)" class="btn btn-network btn-sm flex-fill"
+                                title="3G UMTS"><i class="fas fa-signal me-1"></i>3G</button>
+                            <button onclick="setNetwork('lte', this)" class="btn btn-network btn-sm flex-fill"
+                                title="4G LTE"><i class="fas fa-network-wired me-1"></i>LTE</button>
+                            <button onclick="setNetwork('wifi', this)" class="btn btn-network btn-sm flex-fill"
+                                title="Tốc độ WiFi thực tế của bạn"><i class="fas fa-wifi me-1"></i>WIFI</button>
+                            <button onclick="setNetwork('5g', this)" class="btn btn-network btn-sm flex-fill"
+                                title="5G NR"><i class="fas fa-bolt me-1"></i>5G</button>
+                            <button id="btn-net-reset" onclick="setNetwork('reset', this)"
+                                class="btn btn-network active btn-sm w-100 mt-1"><i
+                                    class="fas fa-globe me-1"></i>UNLIMITED</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fetch Terminal Panel -->
+            <div class="glass-panel mb-3 p-3">
+                <div class="stat-label mb-2 fw-bold text-success"><i class="fas fa-network-wired me-2"></i>Network Fetch
+                    Logs</div>
+                <div id="fetch-terminal"
+                    style="height: 150px; overflow-y: auto; background: rgba(0,0,0,0.5); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; padding: 10px; border-radius: 8px; border: 1px solid #333; color: #888;">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Full Width Log Panel at the Bottom -->
+    <div class="glass-panel p-3 mt-3 mx-3">
+        <div class="stat-label mb-2 fw-bold text-info" style="font-size: 0.9rem;">
+            <i class="fas fa-terminal me-2"></i>Real-time Data & Event Console
+        </div>
+        <div id="log-terminal"
+            style="height: 250px; font-size: 0.9rem; background: rgba(0, 0, 0, 0.7); box-shadow: inset 0 0 10px #000;">
+        </div>
+    </div>
+    </div>
+
+    <script>
+        const manifestUri = '/video/BigBuckBunny_4sec/BigBuckBunny_4s_simple_2014_05_09.mpd';
+        const video = document.getElementById('videoPlayer');
+        const logTerminal = document.getElementById('log-terminal');
+
+        let isRecording = false;
+        let recordingStartTime = null;
+        let recordedData = [];
+        let currentSimProfile = "Unlimited";
+        let currentProtocol = "h2";
+        let targetProtocol = localStorage.getItem('target_protocol') || 'h2';
+
+        function checkInitialProtocolUI() {
+            document.querySelectorAll('[id^="btn-mode-"]').forEach(b => b.classList.remove('active'));
+            const targetBtn = document.getElementById(`btn-mode-${targetProtocol}`);
+            if (targetBtn) targetBtn.classList.add('active');
+        }
+
+        async function setProtocolMode(mode) {
+            localStorage.setItem('target_protocol', mode);
+            targetProtocol = mode;
+
+            try {
+                // Call API to enforce protocol via TC
+                await fetch('/api/network', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `protocol=${mode}`
+                });
+
+                // Thay vì giữ nguyên trang và hiện pop-up gây lỗi log video fragments, ta đẩy sang trang riêng biệt
+                window.location.href = 'switch.html?target=' + mode;
+            } catch (e) {
+                addLog(`ERR: Protocol API failed (${e.message})`);
+            }
+        }
+
+        // --- Chart Data ---
+        let chartLabels = Array(30).fill('');
+        let throughputData = Array(30).fill(0);
+        let bitrateData = Array(30).fill(0);
+        let performanceChart;
+
+        function initChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        {
+                            label: 'Throughput (Mbps)',
+                            borderColor: '#00e676',
+                            backgroundColor: 'rgba(0, 230, 118, 0.1)',
+                            data: throughputData,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: true
+                        },
+                        {
+                            label: 'Bitrate (kbps)',
+                            borderColor: '#fbc02d',
+                            backgroundColor: 'transparent',
+                            data: bitrateData,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#666', font: { size: 10 } },
+                            title: { display: true, text: 'Mbps', color: '#666', font: { size: 10 } }
+                        },
+                        y1: {
+                            position: 'right',
+                            grid: { display: false },
+                            ticks: { color: '#666', font: { size: 10 } },
+                            title: { display: true, text: 'kbps', color: '#666', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function addLog(msg) {
+            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            const div = document.createElement('div');
+            div.innerHTML = `<span style="color: #555;">[${time}]</span> ${msg}`;
+            logTerminal.appendChild(div);
+
+            // Tự động cuộn xuống dưới cùng
+            logTerminal.scrollTop = logTerminal.scrollHeight;
+
+            // Giới hạn 300 dòng để tránh lag trình duyệt
+            if (logTerminal.childNodes.length > 300) {
+                logTerminal.removeChild(logTerminal.firstChild);
+            }
+        }
+
+        function addFetchLog(msg) {
+            const fetchTerminal = document.getElementById('fetch-terminal');
+            if (!fetchTerminal) return;
+            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            const div = document.createElement('div');
+            div.innerHTML = `<span style="color: #555;">[${time}]</span> ${msg}`;
+            fetchTerminal.appendChild(div);
+            fetchTerminal.scrollTop = fetchTerminal.scrollHeight;
+            if (fetchTerminal.childNodes.length > 100) {
+                fetchTerminal.removeChild(fetchTerminal.firstChild);
+            }
+        }
+
+        function setActive(btn, group) {
+            // Handle nested structure
+            const parent = btn.closest('.d-grid') || btn.closest('.row');
+            if (group === 'quality') {
+                document.querySelectorAll('[onclick*="setQuality"], [onclick*="setAuto"]').forEach(b => b.classList.remove('active'));
+            } else {
+                document.querySelectorAll('[onclick*="setNetwork"]').forEach(b => b.classList.remove('active'));
+            }
+            btn.classList.add('active');
+        }
+
+        function toggleRecording() {
+            const btn = document.getElementById('btn-record');
+            const dot = document.getElementById('record-dot');
+            const text = document.getElementById('record-text');
+            const downloadBtn = document.getElementById('btn-download');
+            const viewChartBtn = document.getElementById('btn-view-chart');
+
+            if (!isRecording) {
+                isRecording = true;
+                recordingStartTime = Date.now();
+                recordedData = []; // Clear data on start
+                downloadBtn.disabled = true; // Disable download
+                viewChartBtn.style.display = 'none'; // Hide view chart
+                btn.classList.add('recording');
+                dot.classList.add('pulse');
+                text.textContent = "Stop Session";
+                addLog("<span style='color: #ff5252;'>SESSION STARTED - Recording metrics</span>");
+            } else {
+                isRecording = false;
+                btn.classList.remove('recording');
+                dot.classList.remove('pulse');
+                text.textContent = "Start Session";
+                addLog(`<span style='color: #00e676;'>SESSION ENDED - ${recordedData.length} data points collected</span>`);
+
+                if (recordedData.length > 0) {
+                    downloadBtn.disabled = false;
+                    viewChartBtn.style.display = 'block';
+                }
+            }
+        }
+
+        function clearLogs() {
+            recordedData = [];
+            logTerminal.innerHTML = "";
+            document.getElementById('btn-download').disabled = true;
+            addLog("Data records and terminal cleared.");
+        }
+
+        function downloadCSVFileOnly() {
+            const timestamp = new Date().getTime();
+
+            // Download CSV Only
+            const headers = [
+                "Elapsed_Sec", "Timestamp", "SimProfile", "Protocol",
+                "Bitrate_kbps", "Throughput_Mbps", "Buffer_Sec", "Resolution", "Latency_ms",
+                "Dropped_Frames", "Decoded_Frames", "Corrupted_Frames", "Stalls",
+                "Buffering_Time", "Manifest_Time", "License_Time", "Estimated_BW_bps"
+            ];
+            const csvRows = [headers.join(",")];
+            recordedData.forEach(row => {
+                csvRows.push([
+                    row.elapsed, row.timestamp, row.simProfile, row.protocol,
+                    row.bitrate, row.bandwidth, row.buffer, row.resolution, row.latency,
+                    row.droppedFrames, row.decodedFrames, row.corruptedFrames, row.stalls,
+                    row.bufferingTime, row.manifestTime, row.licenseTime, row.estimatedBW
+                ].join(","));
+            });
+
+            const blob = new Blob([csvRows.join("\n")], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = window.URL.createObjectURL(blob);
+            a.download = `LAB_DATA_${timestamp}.csv`;
+            a.click();
+
+            addLog("Exported CSV log file.");
+        }
+
+        function downloadCSV() {
+            if (recordedData.length === 0) return;
+
+            // Calculate Summary Stats
+            const duration = recordedData[recordedData.length - 1].elapsed;
+            const avgBit = recordedData.length ? Math.round(recordedData.reduce((acc, r) => acc + parseInt(r.bitrate), 0) / recordedData.length) : 0;
+            const maxBW = recordedData.length ? Math.max(...recordedData.map(r => parseFloat(r.bandwidth))) : 0;
+
+            document.getElementById('stat-duration').textContent = `${duration}s`;
+            document.getElementById('stat-avg-bit').textContent = `${avgBit} kbps`;
+            document.getElementById('stat-max-bw').textContent = `${maxBW.toFixed(2)} Mbps`;
+
+            // Generate Final Chart for Modal
+            const chartCanvas = document.getElementById('performanceChart');
+            document.getElementById('result-chart-img').src = chartCanvas.toDataURL("image/png");
+
+            // Show Modal
+            const modalEl = document.getElementById('resultsModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+
+        function viewChart() {
+            if (recordedData.length > 0) {
+                downloadCSV();
+            }
+        }
+
+        async function setNetwork(mode, btn) {
+            const profileNames = { '2g': '2G GPRS', '3g': '3G UMTS', '4g': '4G LTE', 'lte': 'LTE', 'wifi': 'Actual WiFi', '5g': '5G NR', 'reset': 'Unlimited' };
+            currentSimProfile = profileNames[mode] || mode;
+
+            setActive(btn, 'network');
+            addLog(`COMMAND: Set network profile to <b style='color: #ffab00;'>${mode.toUpperCase()}</b>`);
+            try {
+                await fetch('/api/network', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `mode=${mode}`
+                });
+            } catch (e) { addLog(`ERR: API reach failed (${e.message})`); }
+        }
+
+        async function initApp() {
+            checkInitialProtocolUI();
+
+            shaka.polyfill.installAll();
+            if (shaka.Player.isBrowserSupported()) {
+                initPlayer();
+            } else {
+                alert('Browser not supported for Shaka Player');
+            }
+        }
+
+        async function initPlayer() {
+            const player = new shaka.Player(video);
+            window.player = player;
+
+            player.configure({
+                streaming: { bufferingGoal: 10, rebufferingGoal: 2 },
+                abr: { enabled: true }
+            });
+
+            player.addEventListener('variantchanged', (event) => {
+                const variant = event.newVariant;
+                if (!variant || !variant.video) return;
+                addLog(`ABR: Switched to <b style='color: var(--accent-gold);'>${variant.video.height}p</b> (${Math.round(variant.bandwidth / 1000)} kbps)`);
+            });
+
+            player.getNetworkingEngine().registerResponseFilter((type, response) => {
+                const entries = window.performance.getEntriesByName(response.uri);
+                if (entries.length > 0) {
+                    const lastEntry = entries[entries.length - 1];
+                    const latency = Math.round(lastEntry.responseStart - lastEntry.requestStart);
+                    if (latency > 0) document.getElementById('latency').textContent = latency;
+
+                    const proto = lastEntry.nextHopProtocol || 'unknown';
+                    const el = document.getElementById('protocol');
+                    el.textContent = proto;
+                    el.className = proto.includes('h3') ? 'stat-value text-success' : 'stat-value text-warning';
+
+                    // Log chi tiết FETCH dữ liệu
+                    if (response.uri.includes('.m4s') || response.uri.includes('.mpd')) {
+                        const file = response.uri.split('/').pop().split('?')[0];
+                        addFetchLog(`<span>FETCH:</span> <span style="color: #00e676;">${file}</span> <span style='color: #555;'>(${latency}ms via ${proto})</span>`);
+                    }
+                }
+            });
+
+            try {
+                await player.load(manifestUri);
+                addLog("DASH: Manifest analyzed and loaded successfully.");
+                addLog("<span style='color: #aaa;'>Elapsed_Sec,Timestamp,SimProfile,Protocol,Bitrate_kbps,Throughput_Mbps,Buffer_Sec,Resolution,Latency_ms,Dropped_Frames,Decoded_Frames,Corrupted_Frames,Stalls,Buffering_Time,Manifest_Time,License_Time,Estimated_BW_bps</span>");
+            } catch (e) { addLog(`ERR: Load failed (${e.code})`); }
+
+            // Metrics Loop
+            initChart();
+
+            setInterval(() => {
+                const stats = player.getStats();
+
+                // Buffer
+                let buffered = 0;
+                if (video.buffered.length > 0) {
+                    buffered = Math.max(0, video.buffered.end(video.buffered.length - 1) - video.currentTime);
+                }
+                const bufferEl = document.getElementById('buffer');
+                bufferEl.textContent = buffered.toFixed(2);
+                bufferEl.style.color = buffered < 3 ? 'var(--accent-red)' : 'var(--accent-blue)';
+
+                const bufferProgress = document.getElementById('buffer-progress');
+                const percent = Math.min(100, (buffered / 20) * 100); // 20s as max scale
+                bufferProgress.style.width = percent + '%';
+                bufferProgress.style.background = buffered < 5 ? 'var(--accent-red)' : 'var(--accent-blue)';
+
+                // Protocol Detection Improvements
+                const resources = window.performance.getEntriesByType('resource');
+                let detected = 'h2';
+                // Scan the last 15 resource entries to find a segment request
+                for (let i = resources.length - 1; i >= 0 && i > resources.length - 15; i--) {
+                    const entry = resources[i];
+                    if (entry.name.includes('/video/') || entry.name.includes('.m4s') || entry.name.includes('.mpd')) {
+                        const proto = entry.nextHopProtocol;
+                        if (proto && (proto.includes('h3') || proto.includes('quic'))) {
+                            detected = 'h3';
+                            break;
+                        }
+                    }
+                }
+                const protEl = document.getElementById('protocol');
+                if (protEl) {
+                    protEl.textContent = detected.toUpperCase();
+                    protEl.classList.toggle('text-success', detected === 'h3');
+                    protEl.classList.toggle('text-info', detected !== 'h3');
+                }
+
+                // Throughput
+                const bwMbps = (stats.estimatedBandwidth / 1000000).toFixed(2);
+                document.getElementById('bandwidth').textContent = bwMbps;
+
+                // Bitrate & Res
+                if (stats.width && stats.height) {
+                    document.getElementById('resolution').textContent = `${stats.width}x${stats.height}p`;
+                }
+                let bit = 0;
+                if (stats.streamBandwidth) {
+                    bit = Math.round(stats.streamBandwidth / 1000);
+                    document.getElementById('bitrate').textContent = bit;
+                }
+
+                // Update Chart
+                throughputData.shift();
+                throughputData.push(parseFloat(bwMbps));
+                bitrateData.shift();
+                bitrateData.push(bit);
+                performanceChart.update();
+
+                const protocolVal = document.getElementById('protocol').innerText;
+                const elapsedLive = Math.floor(video.currentTime);
+                const statObj = {
+                    elapsed: isRecording ? Math.floor((Date.now() - recordingStartTime) / 1000) : elapsedLive,
+                    timestamp: new Date().toLocaleTimeString(),
+                    simProfile: currentSimProfile,
+                    protocol: protocolVal,
+                    bitrate: bit,
+                    bandwidth: bwMbps,
+                    buffer: buffered.toFixed(2),
+                    resolution: `${stats.width}x${stats.height}`,
+                    latency: document.getElementById('latency').textContent,
+                    droppedFrames: stats.droppedFrames || 0,
+                    decodedFrames: stats.decodedFrames || 0,
+                    corruptedFrames: stats.corruptedFrames || 0,
+                    stalls: stats.stalls || 0,
+                    bufferingTime: stats.bufferingTimeSeconds ? stats.bufferingTimeSeconds.toFixed(3) : 0,
+                    manifestTime: stats.manifestTimeSeconds ? stats.manifestTimeSeconds.toFixed(3) : 0,
+                    licenseTime: stats.licenseTimeSeconds ? stats.licenseTimeSeconds.toFixed(3) : 0,
+                    estimatedBW: stats.estimatedBandwidth || 0
+                };
+
+                // Luôn in log trực tiếp khi video đang chạy
+                if (!video.paused) {
+                    const csvLog = `${elapsedLive},${statObj.timestamp},${statObj.simProfile},${statObj.protocol},${statObj.bitrate},${statObj.bandwidth},${statObj.buffer},${statObj.resolution},${statObj.latency},${statObj.droppedFrames},${statObj.decodedFrames},${statObj.corruptedFrames},${statObj.stalls},${statObj.bufferingTime},${statObj.manifestTime},${statObj.licenseTime},${statObj.estimatedBW}`;
+                    addLog(`<span style='color: #00ff41;'>${csvLog}</span>`);
+                }
+
+                if (isRecording) {
+                    recordedData.push(statObj);
+                    document.getElementById('record-text').textContent = `Recording (${statObj.elapsed}s)`;
+                }
+            }, 1000);
+
+            // Network Profile Polling
+            setInterval(async () => {
+                try {
+                    const res = await fetch('/network_profile.txt?t=' + Date.now());
+                    if (res.ok) {
+                        const profile = (await res.text()).trim();
+                        const badge = document.getElementById('active-profile');
+                        badge.textContent = profile !== "None" ? `Profile: ${profile}` : "No Constraint";
+                        badge.className = profile !== "None" ? 'badge bg-warning text-dark network-status-badge' : 'badge bg-success network-status-badge';
+                    }
+                } catch (e) { }
+            }, 2000);
+
+            window.setAuto = () => {
+                player.configure({ abr: { enabled: true } });
+                addLog("ENGINE: ABR algorithm engaged (Auto)");
+            };
+
+            window.setQuality = (height) => {
+                player.configure({ abr: { enabled: false } });
+                const tracks = player.getVariantTracks().find(t => t.height === height);
+                if (tracks) {
+                    player.selectVariantTrack(tracks, true);
+                    addLog(`ENGINE: Fixed quality target set to <b style='color: #00d2ff;'>${height}p</b>`);
+                }
+            };
+        }
+
+        // --- Dynamic Background Animation (Network Particles) ---
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const particleCount = 150; // More particles
+        const maxLinkDist = 180; // Longer connections
+
+        function initParticles() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.8
+                });
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Add a slight glow effect
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = 'rgba(0, 210, 255, 0.8)';
+
+            for (let i = 0; i < particles.length; i++) {
+                let p1 = particles[i];
+                p1.x += p1.vx;
+                p1.y += p1.vy;
+
+                if (p1.x < 0 || p1.x > canvas.width) p1.vx *= -1;
+                if (p1.y < 0 || p1.y > canvas.height) p1.vy *= -1;
+
+                ctx.fillStyle = 'rgba(0, 210, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(p1.x, p1.y, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    let dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                    if (dist < maxLinkDist) {
+                        ctx.strokeStyle = `rgba(0, 210, 255, ${1 - (dist / maxLinkDist)})`;
+                        ctx.lineWidth = 1.2;
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            ctx.shadowBlur = 0; // Reset for performance
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', initParticles);
+        initParticles();
+        animateParticles();
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+
+</body>
+
+</html>
