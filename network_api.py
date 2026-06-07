@@ -30,7 +30,8 @@ def get_state():
         try:
             with open(STATE_FILE, "r") as f:
                 return json.load(f)
-        except: pass
+        except (json.JSONDecodeError, OSError) as e:
+            logger.warning(f"Failed to read state file, using default: {e}")
     return {"mode": "reset", "protocol": "h2"}
 
 def save_state(mode):
