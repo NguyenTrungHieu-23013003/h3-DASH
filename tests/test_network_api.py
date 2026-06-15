@@ -354,6 +354,60 @@ class TestNetworkHandler(unittest.TestCase):
 
         handler.send_response.assert_called_once_with(200)
 
+    @patch("network_api.threading.Thread")
+    @patch("network_api.get_state", return_value={"mode": "4g"})
+    def test_post_handles_write_exception(self, mock_state, mock_thread):
+        """Nếu wfile.write ném lỗi, handler phải catch và log, đồng thời gửi thông báo lỗi."""
+        body = b"mode=4g"
+        handler, _ = self._make_request(body)
+        
+        # Mô phỏng lỗi khi ghi vào wfile lần 1, nhưng lần 2 (ghi lỗi) thì thành công
+        handler.wfile.write.side_effect = [Exception("Mocked write error"), None]
+        
+        with patch.object(network_api.logger, "error") as mock_log:
+            handler.do_POST()
+            # Phải catch được Exception và gọi logger.error
+            mock_log.assert_called()
+            # Phải cố gắng ghi ra status error (sẽ bị lỗi tiếp vì mock, nhưng code trong catch có gọi wfile.write)
+            self.assertEqual(handler.wfile.write.call_count, 2)
+
+    @patch("network_api.time.sleep")
+    @patch("network_api.apply_tc_rules")
+    @patch("network_api.get_state", return_value={"mode": "4g"})
+    def test_delayed_apply_handles_exception(self, mock_state, mock_apply, mock_sleep):
+        """Nếu hàm apply_tc_rules ném lỗi trong thread delayed_apply, phải catch và log."""
+        body = b"mode=4g"
+        handler, _ = self._make_request(body)
+        
+        # Mô phỏng lỗi trong apply_tc_rules
+        mock_apply.side_effect = Exception("Mocked apply error")
+        
+        # Patch threading.Thread để chạy synchronously hàm delayed_apply
+        def fake_start():
+            # target object
+            args_list = handler.thread_target() if hasattr(handler, 'thread_target') else None
+        
+        with patch("network_api.threading.Thread") as mock_thread_class:
+            mock_thread_instance = MagicMock()
+            
+            # Lấy target function ra để gọi trực tiếp
+            target_func = []
+            def capture_target(target, **kwargs):
+                target_func.append(target)
+                return mock_thread_instance
+                
+            mock_thread_class.side_effect = capture_target
+            
+            with patch.object(network_api.logger, "error") as mock_log:
+                handler.do_POST()
+                
+                # Gọi trực tiếp hàm delayed_apply trong thread
+                if target_func:
+                    target_func[0]()
+                
+                # Phải log lỗi ra
+                mock_log.assert_called()
+
 
 # ==========================================
 # TEST GROUP 5: run_command helper
