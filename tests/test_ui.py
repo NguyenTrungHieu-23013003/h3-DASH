@@ -169,7 +169,7 @@ class TestDashboardUI(unittest.TestCase):
 
         # Chrome headless options
         chrome_options = Options()
-        chrome_options.add_argument("--headless=new")
+        # chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
@@ -234,7 +234,7 @@ class TestDashboardUI(unittest.TestCase):
         self.assertIsNotNone(btn_lte, "Nút 'LTE' không tìm thấy trên Dashboard")
 
         # Kiểm tra các profile khác
-        expected_profiles = ["5G", "4G", "3G", "2G"]
+        expected_profiles = ["5G", "LTE", "3G", "GPRS", "WIFI"]
         for profile in expected_profiles:
             with self.subTest(profile=profile):
                 elements = self.driver.find_elements(
@@ -319,7 +319,7 @@ class TestDashboardUI(unittest.TestCase):
 
         essential_elements = [
             ("ID",    DashboardPage.BTN_RECORD_ID,   "Nút Start/Stop Session"),
-            ("XPATH", "//h1 | //h2 | //header",       "Tiêu đề trang"),
+            ("XPATH", "//*[contains(@class, 'lab-title')]",       "Tiêu đề trang"),
             ("XPATH", "//button",                      "Ít nhất 1 nút trên trang"),
         ]
 
