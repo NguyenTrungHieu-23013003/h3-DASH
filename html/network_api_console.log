@@ -1,55 +1,12 @@
-2026-04-16 13:44:59,111 [DEBUG] Executing command: tc qdisc del dev eth0 root
-2026-04-16 13:44:59,115 [DEBUG] Executing command: iptables -F OUTPUT
-2026-04-16 13:44:59,121 [INFO] Applying Network Profile: mode=5g
-2026-04-16 13:44:59,122 [DEBUG] Executing command: tc qdisc del dev eth0 root
-2026-04-16 13:44:59,123 [DEBUG] Executing command: iptables -F OUTPUT
-2026-04-16 13:44:59,124 [DEBUG] Executing command: tc qdisc add dev eth0 root handle 1: htb default 1
-2026-04-16 13:44:59,126 [DEBUG] Executing command: tc class add dev eth0 parent 1: classid 1:1 htb rate 200mbit ceil 200mbit
-2026-04-16 13:44:59,127 [DEBUG] STDERR: Warning: sch_htb: quantum of class 10001 is big. Consider r2q change.
+2026-06-18 03:34:41,479 [DEBUG] Executing command: tc qdisc del dev eth0 root
+2026-06-18 03:34:41,502 [DEBUG] Executing command: iptables -F OUTPUT
+2026-06-18 03:34:41,552 [INFO] Applying Network Profile: mode=4g
+2026-06-18 03:34:41,555 [DEBUG] Executing command: tc qdisc del dev eth0 root
+2026-06-18 03:34:41,594 [DEBUG] Executing command: iptables -F OUTPUT
+2026-06-18 03:34:41,598 [DEBUG] Executing command: tc qdisc add dev eth0 root handle 1: htb default 1
+2026-06-18 03:34:41,624 [DEBUG] Executing command: tc class add dev eth0 parent 1: classid 1:1 htb rate 20mbit ceil 20mbit
+2026-06-18 03:34:41,630 [DEBUG] STDERR: Warning: sch_htb: quantum of class 10001 is big. Consider r2q change.
 
-2026-04-16 13:44:59,128 [DEBUG] Executing command: tc qdisc add dev eth0 parent 1:1 handle 10: netem delay 10ms loss 0%
-2026-04-16 13:44:59,129 [INFO] Saving State: mode=5g
-2026-04-16 13:44:59,130 [INFO] Strict Network API listening on port 5000...
-2026-04-16 14:01:17,781 [INFO] Incoming POST request: /network
-2026-04-16 14:01:17,784 [DEBUG] Headers: {'Host': 'localhost', 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', 'Content-Length': '7', 'Accept': '*/*', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'en-US,en;q=0.9', 'Content-Type': 'application/x-www-form-urlencoded', 'Origin': 'https://localhost', 'Priority': 'u=1, i', 'Referer': 'https://localhost/', 'Sec-Ch-Ua': '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Linux"', 'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'same-origin', 'X-Forwarded-For': '192.168.65.1', 'X-Forwarded-Host': 'localhost', 'X-Forwarded-Proto': 'https'}
-2026-04-16 14:01:17,785 [DEBUG] Raw Body: mode=5g
-2026-04-16 14:01:17,785 [INFO] Parsed Parameters: {'mode': ['5g']}
-127.0.0.1 - - [16/Apr/2026 14:01:17] "POST /network HTTP/1.1" 200 -
-2026-04-16 14:01:17,788 [INFO] Response Sent: {'status': 'success', 'mode': '5g', 'received_params': {'mode': ['5g']}}
-2026-04-16 14:01:18,791 [INFO] Applying Network Profile: mode=5g
-2026-04-16 14:01:18,792 [DEBUG] Executing command: tc qdisc del dev eth0 root
-2026-04-16 14:01:18,828 [DEBUG] Executing command: iptables -F OUTPUT
-2026-04-16 14:01:18,835 [DEBUG] Executing command: tc qdisc add dev eth0 root handle 1: htb default 1
-2026-04-16 14:01:18,840 [DEBUG] Executing command: tc class add dev eth0 parent 1: classid 1:1 htb rate 200mbit ceil 200mbit
-2026-04-16 14:01:18,844 [DEBUG] STDERR: Warning: sch_htb: quantum of class 10001 is big. Consider r2q change.
-
-2026-04-16 14:01:18,845 [DEBUG] Executing command: tc qdisc add dev eth0 parent 1:1 handle 10: netem delay 10ms loss 0%
-2026-04-16 14:01:18,850 [INFO] Saving State: mode=5g
-2026-04-16 14:01:41,745 [INFO] Incoming POST request: /network
-2026-04-16 14:01:41,745 [DEBUG] Headers: {'Host': 'localhost', 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', 'Content-Length': '7', 'Accept': '*/*', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'en-US,en;q=0.9', 'Content-Type': 'application/x-www-form-urlencoded', 'Origin': 'https://localhost', 'Priority': 'u=1, i', 'Referer': 'https://localhost/', 'Sec-Ch-Ua': '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Linux"', 'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'same-origin', 'X-Forwarded-For': '192.168.65.1', 'X-Forwarded-Host': 'localhost', 'X-Forwarded-Proto': 'https'}
-2026-04-16 14:01:41,746 [DEBUG] Raw Body: mode=5g
-2026-04-16 14:01:41,746 [INFO] Parsed Parameters: {'mode': ['5g']}
-127.0.0.1 - - [16/Apr/2026 14:01:41] "POST /network HTTP/1.1" 200 -
-2026-04-16 14:01:41,747 [INFO] Response Sent: {'status': 'success', 'mode': '5g', 'received_params': {'mode': ['5g']}}
-2026-04-16 14:01:42,748 [INFO] Applying Network Profile: mode=5g
-2026-04-16 14:01:42,749 [DEBUG] Executing command: tc qdisc del dev eth0 root
-2026-04-16 14:01:42,756 [DEBUG] Executing command: iptables -F OUTPUT
-2026-04-16 14:01:42,759 [DEBUG] Executing command: tc qdisc add dev eth0 root handle 1: htb default 1
-2026-04-16 14:01:42,761 [DEBUG] Executing command: tc class add dev eth0 parent 1: classid 1:1 htb rate 200mbit ceil 200mbit
-2026-04-16 14:01:42,765 [DEBUG] STDERR: Warning: sch_htb: quantum of class 10001 is big. Consider r2q change.
-
-2026-04-16 14:01:42,765 [DEBUG] Executing command: tc qdisc add dev eth0 parent 1:1 handle 10: netem delay 10ms loss 0%
-2026-04-16 14:01:42,768 [INFO] Saving State: mode=5g
-2026-04-16 14:01:53,630 [INFO] Incoming POST request: /network
-2026-04-16 14:01:53,631 [DEBUG] Headers: {'Host': 'localhost', 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', 'Content-Length': '7', 'Accept': '*/*', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'en-US,en;q=0.9', 'Content-Type': 'application/x-www-form-urlencoded', 'Origin': 'https://localhost', 'Priority': 'u=1, i', 'Referer': 'https://localhost/', 'Sec-Ch-Ua': '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Linux"', 'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'same-origin', 'X-Forwarded-For': '192.168.65.1', 'X-Forwarded-Host': 'localhost', 'X-Forwarded-Proto': 'https'}
-2026-04-16 14:01:53,631 [DEBUG] Raw Body: mode=2g
-2026-04-16 14:01:53,632 [INFO] Parsed Parameters: {'mode': ['2g']}
-127.0.0.1 - - [16/Apr/2026 14:01:53] "POST /network HTTP/1.1" 200 -
-2026-04-16 14:01:53,632 [INFO] Response Sent: {'status': 'success', 'mode': '2g', 'received_params': {'mode': ['2g']}}
-2026-04-16 14:01:54,634 [INFO] Applying Network Profile: mode=2g
-2026-04-16 14:01:54,634 [DEBUG] Executing command: tc qdisc del dev eth0 root
-2026-04-16 14:01:54,648 [DEBUG] Executing command: iptables -F OUTPUT
-2026-04-16 14:01:54,652 [DEBUG] Executing command: tc qdisc add dev eth0 root handle 1: htb default 1
-2026-04-16 14:01:54,656 [DEBUG] Executing command: tc class add dev eth0 parent 1: classid 1:1 htb rate 128kbit ceil 128kbit
-2026-04-16 14:01:54,661 [DEBUG] Executing command: tc qdisc add dev eth0 parent 1:1 handle 10: netem delay 500ms loss 5%
-2026-04-16 14:01:54,665 [INFO] Saving State: mode=2g
+2026-06-18 03:34:41,631 [DEBUG] Executing command: tc qdisc add dev eth0 parent 1:1 handle 10: netem delay 40ms loss 0.2%
+2026-06-18 03:34:41,667 [INFO] Saving State: mode=4g
+2026-06-18 03:34:41,669 [INFO] Strict Network API listening on port 5000...
